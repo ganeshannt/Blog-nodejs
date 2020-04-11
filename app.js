@@ -1,32 +1,30 @@
-const expree = require('express')
-const mongodb = require('mongodb')
+const express = require('express')
 
-const app = expree()
+const app = express()
 
-
-
-
-
-// Db connection
-let db
-let connectionString = 'mongodb+srv://todoapp:pejppiONw7N1lAgd@cluster0-retqf.mongodb.net/blogdb?retryWrites=true'
-mongodb.connect(connectionString, {useNewUrlParser: true, useUnifiedTopology: true},function(err,client){
-  db = client.db()
-  app.listen(3000)
-console.log("connected");
-    
-})
+// Router config
+const router = require("./router")
 
 
+app.use(express.static('public'))
+app.use(express.urlencoded({extended:false}))
+app.use(express.json())
+
+// app.set("express object","folder name")
+app.set('views','views')
+app.set('view engine','ejs')
 
 
+app.use('/',router)
+
+module.exports = app
 
 
 
 
 
-app.get('/',function(req,res){
-    res.send("Welcome to next journey")
-})
+
+
+
 
 
