@@ -25,6 +25,13 @@ app.use(express.static('public'))
 app.use(express.urlencoded({extended:false}))
 app.use(express.json())
 
+
+app.use(function(req,res,next){
+    res.locals.user  = req.session.user
+    next()
+})
+
+
 app.use('/',router)
 
 // app.set("express object","folder name")

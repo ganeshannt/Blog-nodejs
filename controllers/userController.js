@@ -3,22 +3,39 @@ const User = require('../models/User')
 
 
 exports.signup = function(req,res){
-    // console.log(req.body)
     let user = new User(req.body)
-    user.signup()
-    if (user.error.length) {
-        user.error.forEach(function(err){
-            req.flash('regerror',err)
-        })
-        req.session.save(function(){
-            res.redirect('/')
-        })
-    }
-    else{
-        res.send('congrats ... no error found')
-    }
-    res.send("signup")
+    user.signup().then(() => {
+      req.session.user = {username: user.data.username,avatar:user.avatar,_id:user.data._id}
+      req.session.save(function() {
+        res.redirect('/')
+      })
+    }).catch((regErrors) => {
+      regErrors.forEach(function(error) {
+        req.flash('regErrors', error)
+      })
+      req.session.save(function() {
+        res.redirect('/')
+      })
+    })
+  }
+
+
+
+
+// Login check to access the page 
+exports.mustBeLoggedIn = function(req,res,next){
+  if(req.session.user){
+    next()
+  }else{
+    req.flash("user must be logged into access this page")
+    req.session.save(function(){
+      res.redirect('/')
+    })
+  }
 }
+
+
+
 
 
 
@@ -26,7 +43,7 @@ exports.login = function(req,res){
     let user = new User(req.body)
     user.login()
     .then(function(result){
-        req.session.user = {favColor : "blue", username : user.data.username}
+        req.session.user = {avatar:user.avatar, username : user.data.username, _id : user.data._id}
         req.session.save(function(){
             res.redirect('/')
         })
@@ -50,8 +67,8 @@ exports.signout = function(req,res){
 
 exports.home = function(req, res){
     if (req.session.user) {
-        res.render('home-dashboard',{username : req.session.user.username})      
+        res.render('home-dashboard')      
     } else {
-        res.render('home-guest',{ error : req.flash('error')},{regerror : req.flash('regerror')})
+        res.render('home-guest',{ error : req.flash('error'), regErrors: req.flash('regErrors')})
     }
 }
