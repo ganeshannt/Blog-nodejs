@@ -5,9 +5,16 @@ const md5 = require('md5')
 
 
 
-let User = function(data){
+let User = function(data,getAvatar){
     this.data = data
     this.error = []
+    if (getAvatar == undefined) {
+      getAvatar = false
+    }
+    if (getAvatar) {
+      this.getAvatar()
+    }
+
 }
 
 
@@ -118,6 +125,35 @@ User.prototype.signup = function() {
 
     User.prototype.getAvatar = function() {
       this.avatar = `https://gravatar.com/avatar/${md5(this.data.email)}?s=128`
+    }
+
+
+
+    User.findByUsername = function(username){
+      return new Promise(function(resolve,reject){
+        if ((typeof(username))!= "string") {
+          reject()
+          return
+        } else {
+          userCollection.findOne({username:username}).then(function(userDoc){
+            if(userDoc){
+              userDoc = new User(userDoc, true)
+              userDoc = {
+                _id:userDoc.data._id,
+                username:userDoc.data.username,
+                avatar:userDoc.avatar
+              }
+              resolve(userDoc)
+            } else {
+              reject()
+            }
+          }).catch(function(){
+            reject()
+          })
+          
+        }
+      })
+
     }
 
 

@@ -9,6 +9,7 @@ router.get('/', userController.home)
 router.post('/signup',userController.signup)
 router.post('/login',userController.login)
 router.post('/signout',userController.signout)
+router.get('/profile/:username',userController.ifUserExists,userController.profilePostScreen)
 //POST
 router.get('/create-post',userController.mustBeLoggedIn,postController.viewCreatePost)
 router.post('/create-post',userController.mustBeLoggedIn,postController.create)
