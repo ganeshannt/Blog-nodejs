@@ -25,8 +25,22 @@ app.use(express.static('public'))
 app.use(express.urlencoded({extended:false}))
 app.use(express.json())
 
-
+//  run for every request
 app.use(function(req,res,next){
+// Error and success flash message
+
+res.locals.errors = req.flash("errors")
+res.locals.success = req.flash("success")
+
+//  make current user ud available on req object
+
+    if (req.session.user) {
+        req.visitorId = req.session.user._id
+    }else{
+        req.visitorId = 0
+    }
+
+    // make user session data from within view template 
     res.locals.user  = req.session.user
     next()
 })
