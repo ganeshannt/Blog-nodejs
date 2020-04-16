@@ -1,5 +1,6 @@
 const postCollection = require('../db').db().collection("post")
 const objectID = require('mongodb').ObjectId
+const sanitizeHtml = require('sanitize-html')
 const User = require('./User')
 
 
@@ -21,8 +22,8 @@ Post.prototype.clean = function(){
     }
 // get rid of bugus properties
 this.data ={
-    title : this.data.title.trim(),
-    body:this.data.body.trim(),
+    title : sanitizeHtml(this.data.title.trim(),{allowedTags:[],allowedAttributes:{}}),
+    body: sanitizeHtml(this.data.body.trim(),{allowedTags:[],allowedAttributes:{}}),
     author: objectID(this.userid),
     createdDate: new Date()
 }
@@ -187,6 +188,23 @@ Post.findByAuthorId = function(authorId){
         {$match : {author:authorId}},
         {$sort:{createdDate:-1}}
     ])
+}
+
+
+Post.delete = function(postIdDelete,currentUserId){
+    return new Promise(async (resolve,reject ) => {
+        try {
+            let post = await Post.findSingleById(postIdDelete,currentUserId)
+            if (post.isVisitorOwner) {  
+              await postCollection.deleteOne({_id: new objectID(postIdDelete)})
+                resolve()
+            } else {
+                reject()
+            }
+        } catch  {
+            reject()
+        }
+    })
 }
 
 module.exports = Post
