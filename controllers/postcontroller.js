@@ -91,3 +91,13 @@ exports.delete = function (req, res) {
       });
     });
 };
+
+
+exports.search = function(req,res){
+  Post.search(req.body.searchTerm).then(post=>
+  {
+    res.json(post)
+  }).catch(()=> {
+    res.json([])
+  })
+}

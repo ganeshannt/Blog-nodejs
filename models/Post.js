@@ -126,6 +126,7 @@ Post.reusablePostQuery = function (uniqueOperations, visitorId) {
         // clean up author property in each post object
         posts = posts.map(function (post) {
             post.isVisitorOwner = post.authorId.equals(visitorId)
+            post.authorId = undefined
             post.author = {
                 username: post.author.username,
                 avatar: new User(post.author, true).avatar
@@ -208,5 +209,25 @@ Post.delete = function (postIdDelete, currentUserId) {
         }
     })
 }
+
+
+Post.search = function(searchTerm){
+    return new Promise (async (resolve,reject)=>{
+        if(typeof(searchTerm) == "string"){
+            console.log(searchTerm)
+            let posts = await Post.reusablePostQuery([
+                // to search in mongodb
+                {$match : {$text : {$search : searchTerm}}}
+                // to sort the search result 
+                // {sort : {score : {$meta : "textScore"}}}
+            ])
+            
+            resolve(posts)
+        } else {
+            reject()
+        }
+    })
+}
+
 
 module.exports = Post
