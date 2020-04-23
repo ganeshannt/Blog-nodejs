@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const Post = require("../models/Post");
+const Follow = require("../models/Follow");
 
 exports.signup = function (req, res) {
   let user = new User(req.body);
@@ -84,6 +85,18 @@ exports.ifUserExists = function (req, res, next) {
     });
 };
 
+//  follow and stop follow property
+exports.sharedProfileData = async function(req,res,next){
+  let isFollowing = false
+  if (req.session.user) {
+    isFollowing = await Follow.isVisitorIdFollowing(req.profileUser._id,req.visitorId)
+  }
+  req.isFollowing = isFollowing
+  next()
+}
+
+
+
 exports.profilePostScreen = function (req, res, next) {
   //  ask our post model post by  certain author id
   Post.findByAuthorId(req.profileUser._id)
@@ -92,6 +105,7 @@ exports.profilePostScreen = function (req, res, next) {
         posts: posts,
         profileUsername: req.profileUser.username,
         profileAvatar: req.profileUser.avatar,
+        isFollowing:req.isFollowing
       });
     })
     .catch(function () {
