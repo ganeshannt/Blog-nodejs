@@ -211,17 +211,17 @@ Post.delete = function (postIdDelete, currentUserId) {
 }
 
 
-Post.search = function(searchTerm){
-    return new Promise (async (resolve,reject)=>{
-        if(typeof(searchTerm) == "string"){
+Post.search = function (searchTerm) {
+    return new Promise(async (resolve, reject) => {
+        if (typeof (searchTerm) == "string") {
             console.log(searchTerm)
             let posts = await Post.reusablePostQuery([
                 // to search in mongodb
-                {$match : {$text : {$search : searchTerm}}}
+                { $match: { $text: { $search: searchTerm } } }
                 // to sort the search result 
                 // {sort : {score : {$meta : "textScore"}}}
             ])
-            
+
             resolve(posts)
         } else {
             reject()
@@ -229,5 +229,11 @@ Post.search = function(searchTerm){
     })
 }
 
+Post.countPostByAuthor = function (id) {
+    return new Promise(async (resolve, reject) => {
+        let postCount = await postCollection.countDocuments({ author: id })
+        resolve(postCount)
+    })
+}
 
 module.exports = Post

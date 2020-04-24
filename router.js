@@ -10,7 +10,14 @@ router.get('/', userController.home)
 router.post('/signup', userController.signup)
 router.post('/login', userController.login)
 router.post('/signout', userController.signout)
+
+// Profile
 router.get('/profile/:username', userController.ifUserExists,userController.sharedProfileData, userController.profilePostScreen)
+router.get('/profile/:username/followers', userController.ifUserExists,userController.sharedProfileData, userController.profileFollowersScreen)
+router.get('/profile/:username/following', userController.ifUserExists,userController.sharedProfileData, userController.profileFollowingScreen)
+
+
+
 //POST
 router.get('/create-post', userController.mustBeLoggedIn, postController.viewCreatePost)
 router.post('/create-post', userController.mustBeLoggedIn, postController.create)
@@ -24,6 +31,7 @@ router.post('/search', postController.search)
 // Follow
 
 router.post('/addFollow/:username',userController.mustBeLoggedIn,followController.addFollow)
+router.post('/removeFollow/:username',userController.mustBeLoggedIn,followController.removeFollow)
 
 
 
