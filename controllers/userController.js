@@ -66,9 +66,10 @@ exports.signout = function (req, res) {
   });
 };
 
-exports.home = function (req, res) {
+exports.home = async function (req, res) {
   if (req.session.user) {
-    res.render("home-dashboard");
+    let posts = await Post.getFeed(req.session.user._id)
+    res.render("home-dashboard",{posts:posts});
   } else {
     res.render("home-guest", { regErrors: req.flash("regErrors") });
   }
@@ -101,11 +102,7 @@ exports.sharedProfileData = async function (req, res, next) {
   let countFollowerPromise = Follow.countFollowerByAuthor(req.profileUser._id)
   let countFollowingPromise = Follow.countFollowingByAuthor(req.profileUser._id)
 
-  let countByAuthor = await Promise.all([countPostPromise, countFollowerPromise, countFollowingPromise])
-  let postCount = countByAuthor[0]
-  let followersCount = countByAuthor[1]
-  let followingCount = countByAuthor[2]
-  console.log(countByAuthor)
+  let [postCount, followersCount, followingCount] = await Promise.all([countPostPromise, countFollowerPromise, countFollowingPromise])
   req.postCount = postCount
   req.followersCount = followersCount
   req.followingCount = followingCount
@@ -119,6 +116,7 @@ exports.profilePostScreen = function (req, res, next) {
   Post.findByAuthorId(req.profileUser._id)
     .then(function (posts) {
       res.render("profile", {
+        currentPage: "posts",
         posts: posts,
         profileUsername: req.profileUser.username,
         profileAvatar: req.profileUser.avatar,
@@ -144,6 +142,7 @@ exports.profileFollowersScreen = async function (req, res) {
     console.log("controller :", req.profileUser._id)
     let followers = await Follow.getFollowersById(req.profileUser._id)
     res.render('profile-followers', {
+      currentPage: "followers",
       followers: followers,
       profileUsername: req.profileUser.username,
       profileAvatar: req.profileUser.avatar,
@@ -167,6 +166,7 @@ exports.profileFollowingScreen = async function (req, res) {
     console.log("controller :", req.profileUser._id)
     let following = await Follow.getFollowingById(req.profileUser._id)
     res.render('profile-following', {
+      currentPage: "following",
       followings: following,
       profileUsername: req.profileUser.username,
       profileAvatar: req.profileUser.avatar,

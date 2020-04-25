@@ -79,11 +79,11 @@ Follow.getFollowersById = function (id) {
             console.log("try FOLLOW",id)
             let followers = await followCollection.aggregate([
                 { $match: { wantToFollowId: id } },
-                { $lookup: { from: "users", localField: "authorId", foreignField: "_id", as: "userDoc" } },
+                { $lookup: { from: "users", localField: "authorId", foreignField: "_id", as: "userDocument" } },
                 {
                     $project: {
-                        username: { $arrayElemAt: ["$userDoc.username", 0] },
-                        email: { $arrayElemAt: ["$userDoc.email", 0] }
+                        username: { $arrayElemAt: ["$userDocument.username", 0] },
+                        email: { $arrayElemAt: ["$userDocument.email", 0] }
                     }
                 }
             ]).toArray()
@@ -106,11 +106,11 @@ Follow.getFollowingById= function (id) {
             console.log("try FOLLOW",id)
             let followings = await followCollection.aggregate([
                 { $match: { authorId: id } },
-                { $lookup: { from: "users", localField: "wantToFollowId", foreignField: "_id", as: "userDoc" } },
+                { $lookup: { from: "users", localField: "wantToFollowId", foreignField: "_id", as: "userDocument" } },
                 {
                     $project: {
-                        username: { $arrayElemAt: ["$userDoc.username", 0] },
-                        email: { $arrayElemAt: ["$userDoc.email", 0] }
+                        username: { $arrayElemAt: ["$userDocument.username", 0] },
+                        email: { $arrayElemAt: ["$userDocument.email", 0] }
                     }
                 }
             ]).toArray()
@@ -137,6 +137,7 @@ Follow.countFollowerByAuthor = function(id){
 Follow.countFollowingByAuthor = function(id){
     return new Promise(async (resolve,reject)=>{
         let followingCount = await followCollection.countDocuments({authorId:id})
+        resolve(followingCount)
     })
 }
 

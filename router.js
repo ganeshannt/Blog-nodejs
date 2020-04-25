@@ -6,6 +6,8 @@ const followController = require('./controllers/followController')
 
 //Home
 router.get('/', userController.home)
+
+
 //USER
 router.post('/signup', userController.signup)
 router.post('/login', userController.login)
