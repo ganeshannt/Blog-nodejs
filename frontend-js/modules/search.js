@@ -3,6 +3,7 @@ import axios from 'axios'
 export default class Search {
   // select DOM element and keep track of useful data
   constructor() {
+    // # - select by id  and . - select by class
     this.injectHTML()
     this.headSearchIcon = document.querySelector(".header-search-icon")
     this.overlay = document.querySelector('.search-overlay')

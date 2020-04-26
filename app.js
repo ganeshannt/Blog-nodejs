@@ -58,4 +58,14 @@ app.use('/',router)
 app.set('views','views')
 app.set('view engine','ejs')
 
-module.exports = app
+const server = require('http').createServer(app)
+const io = require('socket.io')(server)
+
+io.on('connection',function(socket){
+    socket.on('chatMessageFromBrowser',function(data){
+        console.log(data.message)
+        io.emit('chatMessageFromBrowser',{message:data.message})
+    })
+    console.log("new user connected!")
+})
+module.exports = server
