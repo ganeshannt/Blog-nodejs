@@ -61,11 +61,24 @@ app.set('view engine','ejs')
 const server = require('http').createServer(app)
 const io = require('socket.io')(server)
 
+// make available the user session for socket.io
+io.use(function(socket,next){
+    sessionOptions(socket.request,socket.request.res,next)
+})
+
+
 io.on('connection',function(socket){
-    socket.on('chatMessageFromBrowser',function(data){
-        console.log(data.message)
-        io.emit('chatMessageFromBrowser',{message:data.message})
-    })
-    console.log("new user connected!")
+    if(socket.request.session.user){
+        let user = socket.request.session.user
+
+        socket.emit('welcome',{username:user.username,avatar:user.avatar})
+
+        socket.on('chatMessageFromBrowser',function(data){
+            console.log(data.message)
+            // broadcasting message 
+            socket.broadcast.emit('chatMessageFromBrowser',{message: sanitizeHtml(data.message, {allowedTags: [], allowedAttributes: {}}), username: user.username, avatar: user.avatar})
+        })
+        console.log("new user connected!")
+    }
 })
 module.exports = server
