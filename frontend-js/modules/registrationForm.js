@@ -32,23 +32,22 @@ export default class RegistrationFrom {
             handler.call(this)
         }
         el.previousValue = el.value
-
     }
     // handling the keystrokes 
     usernameHandler() {
         this.username.errors = false
         this.usernameImmediately()
         clearTimeout(this.username.timer)
-        this.username.timer = setTimeout(() => this.usernameAfterDelay(), 300)
+        this.username.timer = setTimeout(() => this.usernameAfterDelay(), 1000)
     }
     usernameImmediately() {
         if (this.username.value != "" && !/^([a-zA-Z0-9]+)$/.test(this.username.value)) {
             this.showValidationErrors(this.username, 'Username only contains letters and numbers')
         }
         if (!this.username.errors) {
-            this.hideValidationErrors()
+            this.hideValidationErrors(this.username)
         }
-        if (this.username.value.length >= 30) {
+        if (this.username.value.length > 30) {
             this.showValidationErrors(this.username, "Username should not contain more than 30 characters")
         }
 
