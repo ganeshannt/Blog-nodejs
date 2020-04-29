@@ -4,6 +4,8 @@ export default class RegistrationFrom {
     // select DOM element and keep track of useful data
     constructor() {
         // # - select by id  and . - select by class
+        // selection done by input name value
+        this._csrf = document.querySelector('[name = "_csrf"]').value
         this.form = document.querySelector("#registration-form")
         this.allFields = document.querySelectorAll("#registration-form .form-control")
         this.insertValidationElements()
@@ -101,7 +103,7 @@ export default class RegistrationFrom {
         }
 
         if (!this.username.errors) {
-            axios.post('/doesUsernameExist', { username: this.username.value }).then((response) => {
+            axios.post('/doesUsernameExist', { _csrf: this._csrf, username: this.username.value }).then((response) => {
                 if (response.data) {
                     this.showValidationErrors(this.username, "Username already taken")
                     this.username.isUnique = false
@@ -131,7 +133,7 @@ export default class RegistrationFrom {
             this.showValidationErrors(this.email, 'Invalid email address')
         }
         if (!this.email.errors) {
-            axios.post('/doesEmailExist', { email: this.email.value }).then((response) => {
+            axios.post('/doesEmailExist', { _csrf: this._csrf, email: this.email.value }).then((response) => {
                 if (response.data) {
                     this.showValidationErrors(this.email, 'Email already existing')
                     this.email.isUnique = false
