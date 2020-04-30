@@ -1,17 +1,18 @@
 const User = require("../models/User");
 const Post = require("../models/Post");
 const Follow = require("../models/Follow");
+const jwt = require('jsonwebtoken')
 
 
-exports.doesUsernameExist = function(req,res){
-  User.findByUsername(req.body.username).then(()=>{
+exports.doesUsernameExist = function (req, res) {
+  User.findByUsername(req.body.username).then(() => {
     res.json(true)
-  }).catch(()=>{
+  }).catch(() => {
     res.json(false)
   })
 }
 
-exports.doesEmailExist = async function(req,res){
+exports.doesEmailExist = async function (req, res) {
   let emailExistance = await User.findByEmail(req.body.email)
   res.json(emailExistance)
 }
@@ -52,6 +53,18 @@ exports.mustBeLoggedIn = function (req, res, next) {
   }
 };
 
+// Login check via API token
+exports.apiMustBeLoggedIn = function (req, res, next) {
+  try {
+    req.apiUser = jwt.verify(req.body.token, process.env.JWTSECRET)
+    next()
+  } catch  {
+    res.json("Invalid token")
+  }
+};
+
+
+
 exports.login = function (req, res) {
   let user = new User(req.body);
   user
@@ -74,6 +87,20 @@ exports.login = function (req, res) {
     });
 };
 
+// login via API
+exports.apiLogin = function (req, res) {
+  let user = new User(req.body);
+  user
+    .login()
+    .then(function (result) {
+      res.json(jwt.sign({ _id: user.data._id }, process.env.JWTSECRET, { expiresIn: '7d' }))
+    })
+    .catch(function (err) {
+      res.json("Invalid username or password")
+    });
+};
+
+
 exports.signout = function (req, res) {
   req.session.destroy(function () {
     res.redirect("/");
@@ -83,11 +110,26 @@ exports.signout = function (req, res) {
 exports.home = async function (req, res) {
   if (req.session.user) {
     let posts = await Post.getFeed(req.session.user._id)
-    res.render("home-dashboard",{posts:posts});
+    res.render("home-dashboard", { posts: posts });
   } else {
     res.render("home-guest", { regErrors: req.flash("regErrors") });
   }
 };
+
+
+// get post by author via API 
+
+exports.apiGetPostByUsername = async function(req,res){
+  try {
+    let authorDoc = await User.findByUsername(req.params.username)
+    let posts = await Post.findByAuthorId(authorDoc._id)
+    res.json(posts)
+  } catch (error) {
+    res.json("Invalid user request")
+  }
+}
+
+
 
 exports.ifUserExists = function (req, res, next) {
   User.findByUsername(req.params.username)

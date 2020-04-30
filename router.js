@@ -4,6 +4,9 @@ const userController = require('./controllers/userController')
 const postController = require('./controllers/postcontroller')
 const followController = require('./controllers/followController')
 
+
+
+
 //Home
 router.get('/', userController.home)
 

@@ -8,6 +8,15 @@ const app = express()
 const csrf = require('csurf')
 
 
+
+app.use(express.static('public'))
+app.use(express.urlencoded({ extended: false }))
+app.use(express.json())
+
+// API Stuff
+app.use('/api',require('./router-api'))
+
+
 // session config
 let sessionOptions = session({
     secret: "javascript is sooooooo cool",
@@ -24,9 +33,6 @@ app.use(flash())
 // Router config
 const router = require("./router")
 
-app.use(express.static('public'))
-app.use(express.urlencoded({ extended: false }))
-app.use(express.json())
 
 //  run for every request
 app.use(function (req, res, next) {
