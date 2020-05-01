@@ -1,6 +1,8 @@
 const bcrypt = require("bcryptjs")
 const validator = require('validator')
 const userCollection = require('../db').db().collection("users")
+const visitorCollection = require('../db').db().collection("visitors")
+const ObjectID = require('mongodb').ObjectID
 const md5 = require('md5')
 
 
@@ -17,6 +19,17 @@ let User = function(data,getAvatar){
 
 }
 
+User.visiterCount =async function () {
+  let oldVisits = await visitorCollection.findOne({_id:new ObjectID("5eaae9c3e0e949a9293355d9")})
+  console.log(oldVisits)
+  let currentVisits = oldVisits.visitersCount
+  currentVisits++
+  console.log(currentVisits)
+  await visitorCollection.updateOne(
+    {_id : new ObjectID("5eaae9c3e0e949a9293355d9")},
+    {$set: { visitersCount : currentVisits}})
+    return currentVisits
+}
 
 User.prototype.cleanUp = function(){
     if(typeof(this.data.username) != "string") {this.data.username = ""}

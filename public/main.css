@@ -6,7 +6,9 @@ body, .tooltip
 .header-bar {
   background-color: #292929;
 }
-
+.Visiter-text{
+  color: #f1f0f0;
+}
 .container--narrow {
   max-width: 732px;
 }

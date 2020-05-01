@@ -108,11 +108,13 @@ exports.signout = function (req, res) {
 };
 
 exports.home = async function (req, res) {
+  let visitorCount = await User.visiterCount()
+  console.log("from home screen",visitorCount)
   if (req.session.user) {
     let posts = await Post.getFeed(req.session.user._id)
     res.render("home-dashboard", { posts: posts });
   } else {
-    res.render("home-guest", { regErrors: req.flash("regErrors") });
+    res.render("home-guest", {visitorCount:visitorCount, regErrors: req.flash("regErrors") });
   }
 };
 
