@@ -1,16 +1,30 @@
 const Post = require("../models/Post");
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 exports.viewCreatePost = function (req, res) {
   res.render("create-post");
 };
 
-exports.create = function (req, res) {
+exports.create = async function (req, res) {
   // res.send("post has been saved")
   let post = new Post(req.body, req.session.user._id);
   post
     .create()
-    .then(function (newId) {
+    .then(function (newId){
+      const msg = {
+        to: 'ganeshannt@gmail.com',
+        from: 'ganeshancse06@gmail.com',
+        subject:'My first mail from node',
+        text:"I'm sending myself an email"
+       }
       req.flash("success", "New post created");
+      sgMail.send(msg).then(() => {
+        console.log('Message sent')
+    }).catch((error) => {
+        console.log(error.response.body)
+        // console.log(error.response.body.errors[0].message)
+    })
       req.session.save(() => res.redirect(`/post/${newId}`));
       // res.send("Post created")
     })

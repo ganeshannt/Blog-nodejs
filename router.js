@@ -3,6 +3,7 @@ const router = express.Router()
 const userController = require('./controllers/userController')
 const postController = require('./controllers/postcontroller')
 const followController = require('./controllers/followController')
+const adminController = require('./controllers/adminController')
 
 
 
@@ -40,6 +41,8 @@ router.post('/search', postController.search)
 router.post('/addFollow/:username',userController.mustBeLoggedIn,followController.addFollow)
 router.post('/removeFollow/:username',userController.mustBeLoggedIn,followController.removeFollow)
 
+// Admin
 
+router.get('/iamadmin',adminController.login)
 
 module.exports = router
