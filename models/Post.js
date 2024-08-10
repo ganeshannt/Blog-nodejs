@@ -1,259 +1,248 @@
-const postCollection = require('../db').db().collection("post")
-const followCollection = require('../db').db().collection("follows")
+const postCollection = require('../db').db().collection('post')
+const followCollection = require('../db').db().collection('follows')
 const objectID = require('mongodb').ObjectId
 const sanitizeHtml = require('sanitize-html')
 const User = require('./User')
 const Follow = require('./Follow')
 
-
 let Post = function (data, userid, requestedPostId) {
-    this.data = data
-    this.error = []
-    this.userid = userid
-    this.requestedPostId = requestedPostId
+  this.data = data
+  this.error = []
+  this.userid = userid
+  this.requestedPostId = requestedPostId
 }
-
-
 
 Post.prototype.clean = function () {
-    if (typeof (this.data.title) != "string") {
-        this.data.title = ""
-    }
-    if (typeof (this.data.body) != "string") {
-        this.data.body = ""
-    }
-    // get rid of bugus properties
-    this.data = {
-        title: sanitizeHtml(this.data.title.trim(), { allowedTags: [], allowedAttributes: {} }),
-        body: sanitizeHtml(this.data.body.trim(), { allowedTags: [], allowedAttributes: {} }),
-        author: objectID(this.userid),
-        createdDate: new Date()
-    }
+  if (typeof this.data.title != 'string') {
+    this.data.title = ''
+  }
+  if (typeof this.data.body != 'string') {
+    this.data.body = ''
+  }
+  // get rid of bugus properties
+  this.data = {
+    title: sanitizeHtml(this.data.title.trim(), {
+      allowedTags: [],
+      allowedAttributes: {}
+    }),
+    body: sanitizeHtml(this.data.body.trim(), {
+      allowedTags: [],
+      allowedAttributes: {}
+    }),
+    author: objectID(this.userid),
+    createdDate: new Date()
+  }
 }
-
 
 Post.prototype.validate = function () {
-    if (typeof (this.data.title) != "string") {
-        this.error.push("You must provide title")
-    }
-    if (typeof (this.data.body) != "string") {
-        this.error.push("You must write content right ?")
-    }
-
+  if (typeof this.data.title != 'string') {
+    this.error.push('You must provide title')
+  }
+  if (typeof this.data.body != 'string') {
+    this.error.push('You must write content right ?')
+  }
 }
-
-
-
 
 Post.prototype.create = function () {
-
-    return new Promise((resolve, reject) => {
-        this.validate()
-        this.clean()
-        if (!this.error.length) {
-            //save post
-            postCollection.insertOne(this.data)
-                .then((info) => {
-                    resolve(info.ops[0]._id)
-                })
-                .catch(() => {
-                    this.error.push("Please try after sometime")
-                    reject(this.error)
-                })
-        } else {
-            // throw error
-            reject(this.error)
-        }
-    })
+  return new Promise((resolve, reject) => {
+    this.validate()
+    this.clean()
+    if (!this.error.length) {
+      //save post
+      postCollection
+        .insertOne(this.data)
+        .then(info => {
+          resolve(info.ops[0]._id)
+        })
+        .catch(() => {
+          this.error.push('Please try after sometime')
+          reject(this.error)
+        })
+    } else {
+      // throw error
+      reject(this.error)
+    }
+  })
 }
-
-
 
 Post.prototype.update = function () {
-    return new Promise(async (resolve, reject) => {
-        try {
-            let post = await Post.findSingleById(this.requestedPostId, this.userid)
-            if (post.isVisitorOwner) {
-                // actual update on DB
-                let status = await this.actuallyUpdate()
-                resolve(status)
-            } else {
-                reject()
-            }
-        } catch {
-            reject()
-
-        }
-    })
+  return new Promise(async (resolve, reject) => {
+    try {
+      let post = await Post.findSingleById(this.requestedPostId, this.userid)
+      if (post.isVisitorOwner) {
+        // actual update on DB
+        let status = await this.actuallyUpdate()
+        resolve(status)
+      } else {
+        reject()
+      }
+    } catch {
+      reject()
+    }
+  })
 }
-
-
 
 Post.prototype.actuallyUpdate = function () {
-    return new Promise(async (resolve, reject) => {
-        this.clean()
-        this.validate()
-        if (!this.error.length) {
-            await postCollection.findOneAndUpdate({ _id: new objectID(this.requestedPostId) }, {
-                $set: {
-                    title: this.data.title,
-                    body: this.data.body
-                }
-            })
-            resolve("success")
-        } else {
-            resolve("failure")
+  return new Promise(async (resolve, reject) => {
+    this.clean()
+    this.validate()
+    if (!this.error.length) {
+      await postCollection.findOneAndUpdate(
+        { _id: new objectID(this.requestedPostId) },
+        {
+          $set: {
+            title: this.data.title,
+            body: this.data.body
+          }
         }
-    })
+      )
+      resolve('success')
+    } else {
+      resolve('failure')
+    }
+  })
 }
-
-
 
 Post.reusablePostQuery = function (uniqueOperations, visitorId) {
-    return new Promise(async function (resolve, reject) {
-        let aggOperations = uniqueOperations.concat([
-            { $lookup: { from: "users", localField: "author", foreignField: "_id", as: "authorDocument" } },
-            {
-                $project: {
-                    title: 1,
-                    body: 1,
-                    createdDate: 1,
-                    authorId: "$author",
-                    author: { $arrayElemAt: ["$authorDocument", 0] }
-                }
-            }
-        ])
-        let posts = await postCollection.aggregate(aggOperations).toArray()
+  return new Promise(async function (resolve, reject) {
+    let aggOperations = uniqueOperations.concat([
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'author',
+          foreignField: '_id',
+          as: 'authorDocument'
+        }
+      },
+      {
+        $project: {
+          title: 1,
+          body: 1,
+          createdDate: 1,
+          authorId: '$author',
+          author: { $arrayElemAt: ['$authorDocument', 0] }
+        }
+      }
+    ])
+    let posts = await postCollection.aggregate(aggOperations).toArray()
 
-        // clean up author property in each post object
-        posts = posts.map(function (post) {
-            post.isVisitorOwner = post.authorId.equals(visitorId)
-            post.authorId = undefined
-            post.author = {
-                username: post.author.username,
-                avatar: new User(post.author, true).avatar
-            }
-            return post
-        })
-        resolve(posts)
+    // clean up author property in each post object
+    posts = posts.map(function (post) {
+      post.isVisitorOwner = post.authorId.equals(visitorId)
+      post.authorId = undefined
+      post.author = {
+        username: post.author.username,
+        avatar: new User(post.author, true).avatar
+      }
+      return post
     })
+    resolve(posts)
+  })
 }
 
-
-
-
-
-
-
 Post.findSingleById = function (id, visitorId) {
-    return new Promise(async function (resolve, reject) {
-        if (typeof (id) != "string" || !objectID.isValid(id)) {
-            reject()
-            return
-        }
+  return new Promise(async function (resolve, reject) {
+    if (typeof id != 'string' || !objectID.isValid(id)) {
+      reject()
+      return
+    }
 
+    // let posts = await postCollection.aggregate([
+    //     {$match : {_id: new objectID(id)}},
+    //     {$lookup:{from:"users",localField: "author", foreignField:"_id", as:"authorDocument"}},
+    //     {$project:{
+    //         title:1,
+    //         body:1,
+    //         createdDate:1,
+    //         author:{$arrayElemAt:["$authorDocument",0]}
+    //     }}
+    // ]).toArray()
 
+    // // clean up author property in each post object
+    // posts = posts.map(function(post){
+    //     post.author = {
+    //         username:post.author.username,
+    //         avatar: new User(post.author,true).avatar
+    //     }
+    //     return post
+    // })
 
-        // let posts = await postCollection.aggregate([
-        //     {$match : {_id: new objectID(id)}},
-        //     {$lookup:{from:"users",localField: "author", foreignField:"_id", as:"authorDocument"}},
-        //     {$project:{
-        //         title:1,
-        //         body:1,
-        //         createdDate:1,
-        //         author:{$arrayElemAt:["$authorDocument",0]}
-        //     }}
-        // ]).toArray()
-
-        // // clean up author property in each post object
-        // posts = posts.map(function(post){
-        //     post.author = {
-        //         username:post.author.username,
-        //         avatar: new User(post.author,true).avatar
-        //     }
-        //     return post
-        // })
-
-
-        let posts = await Post.reusablePostQuery([
-            { $match: { _id: new objectID(id) } }
-        ], visitorId)
-        // let post = await postCollection.findOne({_id: new objectID(id)})
-        if (posts.length) {
-            console.log(posts[0])
-            resolve(posts[0])
-        } else {
-            reject()
-        }
-    })
+    let posts = await Post.reusablePostQuery(
+      [{ $match: { _id: new objectID(id) } }],
+      visitorId
+    )
+    // let post = await postCollection.findOne({_id: new objectID(id)})
+    if (posts.length) {
+      console.log(posts[0])
+      resolve(posts[0])
+    } else {
+      reject()
+    }
+  })
 }
 
 Post.findByAuthorId = function (authorId) {
-    return Post.reusablePostQuery([
-        { $match: { author: authorId } },
-        { $sort: { createdDate: -1 } }
-    ])
+  return Post.reusablePostQuery([
+    { $match: { author: authorId } },
+    { $sort: { createdDate: -1 } }
+  ])
 }
-
 
 Post.delete = function (postIdDelete, currentUserId) {
-    return new Promise(async (resolve, reject) => {
-        try {
-            let post = await Post.findSingleById(postIdDelete, currentUserId)
-            if (post.isVisitorOwner) {
-                await postCollection.deleteOne({ _id: new objectID(postIdDelete) })
-                resolve()
-            } else {
-                reject()
-            }
-        } catch  {
-            reject()
-        }
-    })
+  return new Promise(async (resolve, reject) => {
+    try {
+      let post = await Post.findSingleById(postIdDelete, currentUserId)
+      if (post.isVisitorOwner) {
+        await postCollection.deleteOne({ _id: new objectID(postIdDelete) })
+        resolve()
+      } else {
+        reject()
+      }
+    } catch {
+      reject()
+    }
+  })
 }
 
-
 Post.search = function (searchTerm) {
-    return new Promise(async (resolve, reject) => {
-        if (typeof (searchTerm) == "string") {
-            console.log(searchTerm)
-            let posts = await Post.reusablePostQuery([
-                // to search in mongodb
-                { $match: { $text: { $search: searchTerm } } }
-                // to sort the search result 
-                // {sort : {score : {$meta : "textScore"}}}
-            ])
+  return new Promise(async (resolve, reject) => {
+    if (typeof searchTerm == 'string') {
+      console.log(searchTerm)
+      let posts = await Post.reusablePostQuery([
+        // to search in mongodb
+        { $match: { $text: { $search: searchTerm } } }
+        // to sort the search result
+        // {sort : {score : {$meta : "textScore"}}}
+      ])
 
-            resolve(posts)
-        } else {
-            reject()
-        }
-    })
+      resolve(posts)
+    } else {
+      reject()
+    }
+  })
 }
 
 Post.countPostByAuthor = function (id) {
-    return new Promise(async (resolve, reject) => {
-        let postCount = await postCollection.countDocuments({ author: id })
-        resolve(postCount)
-    })
+  return new Promise(async (resolve, reject) => {
+    let postCount = await postCollection.countDocuments({ author: id })
+    resolve(postCount)
+  })
 }
 
-
-Post.getFeed = async function(id){
-    // get following user id
-    let followingUser = await followCollection.find({authorId : new objectID(id)}).toArray()
-    console.log(followingUser)
-    followingUser = followingUser.map(function(followDoc){
-        return followDoc.wantToFollowId
-    })
-// get following user's post
-return Post.reusablePostQuery([
-    {$match:{author:{$in:followingUser}}},
-    {$sort: {createdDate:-1}}
-])
-
-
-
+Post.getFeed = async function (id) {
+  // get following user id
+  let followingUser = await followCollection
+    .find({ authorId: new objectID(id) })
+    .toArray()
+  console.log(followingUser)
+  followingUser = followingUser.map(function (followDoc) {
+    return followDoc.wantToFollowId
+  })
+  // get following user's post
+  return Post.reusablePostQuery([
+    { $match: { author: { $in: followingUser } } },
+    { $sort: { createdDate: -1 } }
+  ])
 }
 
 module.exports = Post

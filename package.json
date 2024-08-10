@@ -1,7 +1,7 @@
 {
-  "name": "Blog-nodejs",
+  "name": "blog-nodejs",
   "version": "1.0.0",
-  "description": "",
+  "description": "Learning node js by doing small components",
   "main": "app.js",
   "dependencies": {
     "@babel/core": "^7.9.0",
@@ -30,7 +30,16 @@
     "webpack": "^4.42.1",
     "webpack-cli": "^3.3.11"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-promise": "^7.1.0",
+    "eslint-plugin-standard": "^5.0.0",
+    "prettier": "^3.3.3"
+  },
   "scripts": {
     "watch": "start nodemon db --ignore frontend-js --ignore public/ && start webpack --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
